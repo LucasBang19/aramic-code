@@ -1,0 +1,115 @@
+/* =====================================================================
+   MEMBERS CERAMIC — DESIGN TOKENS (vendored into the app shell)
+   Canonical copy: aramaic-code-members/design/tokens.css
+   v4.1 — 2026-08-08 — "ILLUMINATED MANUSCRIPT" theme · polish pass
+   (design/theme-research.md · Direction 1)
+   Parchment ink darks · single glowing gold · weathered vellum ·
+   parchment-cream text · Cinzel / Cinzel Decorative / IM Fell / Cormorant
+   ===================================================================== */
+:root {
+  color-scheme: dark;
+  /* ==== PALETTE (Direction 1: Illuminated Manuscript) ==== */
+  --bg: #0f0d0a;            /* deepest backdrop */
+  --bg-secondary: #1a1410;  /* ink-stained parchment dark */
+  --bg-elevated: #211a14;   /* raised surface */
+  --bg-card: #1c1610;       /* parchment panel */
+
+  --fg: #f5e6d3;            /* parchment cream text */
+  --fg-muted: #cbb396;      /* weathered muted cream */
+  --secondary: #8b7355;     /* weathered vellum */
+
+  --accent: #d4af37;        /* THE glowing gold (single, consistent) */
+  --accent-light: #f0d98c;  /* lit gold — text highlights */
+  --accent-medium: #b08d2f; /* aged gold — borders & rules */
+  --gold-deep: #6b551e;     /* shadowed gold */
+
+  --line: #3a2c1c;              /* vellum seam / hairline */
+  --line-soft: rgba(212, 175, 55, 0.16);
+  --stone-border: var(--line);  /* legacy alias (app.css) */
+
+  --error: #c1121f;
+  --success: #2d6a4f;
+  --warning: #d68c1f;
+
+  /* ==== TYPOGRAPHY ==== */
+  --font-display: "Cinzel Decorative", "Cinzel", serif;
+  --font-heading: "Cinzel", "Cinzel Decorative", serif;
+  --font-dropcap: "IM Fell English", "Cinzel Decorative", serif;
+  --font-body: "Cormorant Garamond", "Cormorant", Georgia, serif;
+  --font-mono: ui-monospace, "Cormorant Garamond", Georgia, serif;
+
+  --font-body-size: clamp(1.0625rem, 1rem + 0.5vw, 1.125rem);
+  --line-height-body: 1.7;
+  --font-body-weight: 500;
+
+  /* ==== TYPE SCALE ==== */
+  --text-xs: clamp(0.75rem, 2vw, 0.875rem);
+  --text-sm: clamp(0.875rem, 2.5vw, 1rem);
+  --text-base: clamp(1rem, 3vw, 1.125rem);
+  --text-lg: clamp(1.25rem, 4vw, 1.5rem);
+  --text-xl: clamp(1.5rem, 5vw, 1.875rem);
+  --text-2xl: clamp(1.875rem, 6vw, 2.25rem);
+  --text-3xl: clamp(2.25rem, 7vw, 2.75rem);
+  --text-4xl: clamp(2.75rem, 8vw, 3.5rem);
+
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --filigree-size: 44px;        /* corner-ornament box size (unified) */
+
+  --container-max: 1200px;      /* layout width cap */
+
+  /* ==== TEXTURE & ORNAMENT (inline SVG, works fully offline) ==== */
+  --tex-noise: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="matrix" values="0 0 0 0 0.82 0 0 0 0 0.70 0 0 0 0 0.48 0 0 0 0.08 0"/></filter><rect width="160" height="160" filter="url(%23n)"/></svg>');
+
+  --parchment-bg:
+    linear-gradient(165deg, rgba(212, 175, 55, 0.06) 0%, rgba(212, 175, 55, 0) 38%),
+    radial-gradient(150% 130% at 50% 0%, rgba(245, 230, 211, 0.05) 0%, rgba(0, 0, 0, 0.52) 100%),
+    var(--tex-noise);
+
+  --burn-edge:
+    inset 0 0 0 1px rgba(212, 175, 55, 0.14),
+    inset 0 0 38px rgba(0, 0, 0, 0.55);
+
+  --filigree-tl: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" fill="none"><path d="M2 20C9 20 20 9 20 2" stroke="%23d4af37" stroke-width="1.4"/><path d="M2 30C13 30 30 13 30 2" stroke="%23d4af37" stroke-width="1" opacity=".6"/><path d="M2 38C19 38 38 19 38 2" stroke="%23d4af37" stroke-width=".7" opacity=".38"/><circle cx="11" cy="11" r="1.6" fill="%23d4af37"/><circle cx="26" cy="26" r="1.1" fill="%23d4af37" opacity=".5"/></svg>');
+  --filigree-tr: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" fill="none"><g transform="translate(44 0) scale(-1 1)"><path d="M2 20C9 20 20 9 20 2" stroke="%23d4af37" stroke-width="1.4"/><path d="M2 30C13 30 30 13 30 2" stroke="%23d4af37" stroke-width="1" opacity=".6"/><path d="M2 38C19 38 38 19 38 2" stroke="%23d4af37" stroke-width=".7" opacity=".38"/><circle cx="11" cy="11" r="1.6" fill="%23d4af37"/><circle cx="26" cy="26" r="1.1" fill="%23d4af37" opacity=".5"/></g></svg>');
+  --filigree-br: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" fill="none"><g transform="translate(44 44) scale(-1 -1)"><path d="M2 20C9 20 20 9 20 2" stroke="%23d4af37" stroke-width="1.4"/><path d="M2 30C13 30 30 13 30 2" stroke="%23d4af37" stroke-width="1" opacity=".6"/><path d="M2 38C19 38 38 19 38 2" stroke="%23d4af37" stroke-width=".7" opacity=".38"/><circle cx="11" cy="11" r="1.6" fill="%23d4af37"/><circle cx="26" cy="26" r="1.1" fill="%23d4af37" opacity=".5"/></g></svg>');
+  --filigree-bl: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" fill="none"><g transform="translate(0 44) scale(1 -1)"><path d="M2 20C9 20 20 9 20 2" stroke="%23d4af37" stroke-width="1.4"/><path d="M2 30C13 30 30 13 30 2" stroke="%23d4af37" stroke-width="1" opacity=".6"/><path d="M2 38C19 38 38 19 38 2" stroke="%23d4af37" stroke-width=".7" opacity=".38"/><circle cx="11" cy="11" r="1.6" fill="%23d4af37"/><circle cx="26" cy="26" r="1.1" fill="%23d4af37" opacity=".5"/></g></svg>');
+
+  /* ==== MOTION ==== */
+  --motion-fast: 150ms;
+  --motion-normal: 300ms;
+  --motion-slow: 600ms;
+  --easing-ease: ease;
+  --easing-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-glow: cubic-bezier(0.33, 0.66, 0.4, 1);
+
+  /* ==== B-SLOT (Component Aliases) ==== */
+  --btn-bg: var(--accent);
+  --btn-fg: #1a1205;
+  --btn-border: transparent;
+  --card-bg: var(--bg-card);
+  --card-border: var(--accent-medium);
+  --input-bg: #120d08;
+  --input-border: var(--line);
+  --input-fg: var(--fg);
+  --link-color: var(--accent);
+  --link-hover: var(--accent-light);
+
+  /* ==== C-EXTENSIONS (Light & Depth — warm candlelight, never pure black) ==== */
+  --shadow-sm: 0 2px 8px rgba(15, 10, 2, 0.4), 0 0 14px rgba(212, 175, 55, 0.1);
+  --shadow-md: 0 6px 18px rgba(15, 10, 2, 0.5), 0 0 24px rgba(212, 175, 55, 0.16);
+  --shadow-lg: 0 12px 38px rgba(15, 10, 2, 0.62), 0 0 42px rgba(212, 175, 55, 0.26);
+  --glow-sm: 0 0 12px rgba(212, 175, 55, 0.32);
+  --glow-md: 0 0 26px rgba(212, 175, 55, 0.46);
+  --glow-lg: 0 0 52px rgba(212, 175, 55, 0.6);
+}

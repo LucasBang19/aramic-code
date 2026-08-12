@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Members Ceramic">
+  <defs>
+    <radialGradient id="halo" cx="50%" cy="46%" r="70%">
+      <stop offset="0%" stop-color="#3b1f4e"/>
+      <stop offset="42%" stop-color="#120c06"/>
+      <stop offset="100%" stop-color="#050301"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd766" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ffd766" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="goldstroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7e7ad"/>
+      <stop offset="50%" stop-color="#d9ab3c"/>
+      <stop offset="100%" stop-color="#b8912f"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="#050301"/>
+  <rect width="512" height="512" rx="96" fill="url(#halo)"/>
+  <ellipse cx="256" cy="236" rx="230" ry="230" fill="url(#glow)"/>
+
+  <!-- sacred geometry ring -->
+  <circle cx="256" cy="236" r="188" fill="none" stroke="url(#goldstroke)" stroke-width="6" opacity="0.85"/>
+  <circle cx="256" cy="236" r="160" fill="none" stroke="#b8912f" stroke-width="2" opacity="0.45"/>
+
+  <!-- Star of David -->
+  <polygon points="256,96 389,306 123,306" fill="none" stroke="url(#goldstroke)" stroke-width="14" stroke-linejoin="round" opacity="0.95"/>
+  <polygon points="256,376 389,166 123,166" fill="none" stroke="url(#goldstroke)" stroke-width="14" stroke-linejoin="round" opacity="0.95"/>
+
+  <!-- twelve beads (sacred geometry / tree of life) -->
+  <g fill="#f7e7ad">
+    <circle cx="256" cy="48" r="9"/>
+    <circle cx="359" cy="76" r="7"/>
+    <circle cx="442" cy="156" r="7"/>
+    <circle cx="462" cy="257" r="7"/>
+    <circle cx="438" cy="354" r="7"/>
+    <circle cx="352" cy="429" r="7"/>
+    <circle cx="153" cy="429" r="7"/>
+    <circle cx="72" cy="354" r="7"/>
+    <circle cx="50" cy="257" r="7"/>
+    <circle cx="74" cy="156" r="7"/>
+    <circle cx="153" cy="76" r="7"/>
+  </g>
+</svg>

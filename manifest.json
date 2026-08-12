@@ -1,0 +1,47 @@
+{
+  "name": "The Aramaic Code — Members Library",
+  "short_name": "The Aramaic Code",
+  "description": "The Aramaic Code members library with lessons and bonuses.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#0f0d0a",
+  "theme_color": "#0f0d0a",
+  "lang": "en",
+  "categories": ["education", "lifestyle", "books"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Library",
+      "short_name": "Library",
+      "url": "./#/library"
+    },
+    {
+      "name": "Profile",
+      "short_name": "Profile",
+      "url": "./#/profile"
+    }
+  ]
+}

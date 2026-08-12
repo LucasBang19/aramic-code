@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Members Ceramic">
+  <rect width="64" height="64" rx="14" fill="#050301"/>
+  <circle cx="32" cy="30" r="24" fill="#ffd766" opacity="0.14"/>
+  <circle cx="32" cy="30" r="22" fill="none" stroke="#d9ab3c" stroke-width="1.5" opacity="0.9"/>
+  <polygon points="32,13 44.5,42 19.5,42" fill="none" stroke="#f7e7ad" stroke-width="2.2" stroke-linejoin="round"/>
+  <polygon points="32,47 44.5,18 19.5,18" fill="none" stroke="#f7e7ad" stroke-width="2.2" stroke-linejoin="round"/>
+</svg>
