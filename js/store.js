@@ -6,6 +6,7 @@ import {
   assignAreaToItem
 } from "./seeds.js";
 import { DEFAULT_LANG } from "./i18n.js";
+import { supabase } from "./supabase.js";
 
 const KEYS = {
   members: "ac_members_v1",
@@ -202,6 +203,60 @@ export function getAreas() {
 
 export function getArea(id) {
   return getAreas().find((a) => a.id === id) || null;
+}
+
+export async function syncRemote(userId) {
+  if (!userId) return false;
+
+  const [modulesResult, lessonsResult, accessResult] = await Promise.all([
+    supabase.from("modules").select("*").order("sort_order", { ascending: true }),
+    supabase.from("lessons").select("*").order("sort_order", { ascending: true }),
+    supabase.from("module_access").select("module_id").eq("user_id", userId)
+  ]);
+
+  if (modulesResult.error || lessonsResult.error || accessResult.error) {
+    console.warn("[supabase] content sync failed", modulesResult.error || lessonsResult.error || accessResult.error);
+    return false;
+  }
+
+  const areas = (modulesResult.data || []).map((module) => ({
+    id: module.id,
+    title: module.title,
+    description: module.description || "",
+    cover: module.cover || "",
+    createdAt: module.created_at,
+    isRemote: true
+  }));
+  const items = (lessonsResult.data || []).map((lesson) => ({
+    id: lesson.id,
+    title: lesson.title,
+    description: lesson.description || "",
+    type: lesson.type || "video",
+    url: lesson.url || "",
+    category: lesson.category || "teaching",
+    tags: Array.isArray(lesson.tags) ? lesson.tags : [],
+    thumbnail: lesson.thumbnail || "",
+    duration: lesson.duration || 0,
+    areaId: lesson.module_id,
+    createdAt: lesson.created_at,
+    isRemote: true
+  }));
+  const enrollments = (accessResult.data || []).map((row) => row.module_id);
+  const members = getMembers();
+  const member = members.find((item) => item.id === userId);
+  if (member) {
+    saveMembers(
+      members.map((item) =>
+        item.id === userId ? { ...item, enrollments, language: DEFAULT_LANG } : item
+      )
+    );
+  }
+
+  write(KEYS.areas, areas);
+  write(KEYS.content, items);
+  emit("areas");
+  emit("content");
+  return true;
 }
 
 export function saveAreas(areas) {

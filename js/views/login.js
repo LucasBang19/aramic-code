@@ -106,14 +106,28 @@ export function renderLogin(container) {
       if (!valid) return;
 
       setLoading(true);
-      setTimeout(() => {
-        const result = mode === "signup" ? auth.register(email, password) : auth.login(email, password);
+      setTimeout(async () => {
+        let result;
+        try {
+          result = await (mode === "signup" ? auth.register(email, password) : auth.login(email, password));
+        } catch (error) {
+          console.error("[auth] request failed", error);
+          result = { ok: false, error: "database" };
+        }
         if (result.ok) {
           toast(t("auth.welcome"));
           navigate("home");
         } else {
           setLoading(false);
-          errorBox.textContent = result.error === "exists" ? t("auth.accountExists") : t("auth.wrongCreds");
+          const message =
+            result.error === "exists"
+              ? t("auth.accountExists")
+              : result.error === "confirmEmail"
+                ? t("auth.confirmEmail")
+                : result.error === "database"
+                  ? t("auth.databaseError")
+                  : t("auth.wrongCreds");
+          errorBox.textContent = message;
           errorBox.hidden = false;
         }
       }, 250);

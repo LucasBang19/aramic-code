@@ -1,4 +1,4 @@
-const CACHE_NAME = "members-ceramic-shell-v9";
+const CACHE_NAME = "members-ceramic-shell-v10";
 const APP_SHELL = [
   "./",
   "./manifest.json",
@@ -16,6 +16,7 @@ const APP_SHELL = [
   "./js/seeds.js",
   "./js/store.js",
   "./js/auth.js",
+  "./js/supabase.js",
   "./js/ui.js",
   "./js/router.js",
   "./js/views/login.js",

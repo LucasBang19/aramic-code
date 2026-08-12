@@ -1,4 +1,5 @@
 import * as store from "./store.js";
+import * as auth from "./auth.js";
 import { start } from "./router.js";
 import { t } from "./i18n.js";
 import { initInstallPrompt } from "./pwa-install.js";
@@ -50,3 +51,4 @@ renderFallbackIfNeeded();
 initInstallPrompt();
 start();
 window.__AC_BOOTED__ = true;
+void auth.restoreSession();

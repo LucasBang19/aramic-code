@@ -1,53 +1,96 @@
 import * as store from "./store.js";
+import { supabase } from "./supabase.js";
 
-export function login(email, password) {
-  const emailNorm = (email || "").trim().toLowerCase();
-  if (!emailNorm || !password) {
-    return { ok: false, error: "required" };
-  }
-  const members = store.getMembers();
-  const member = members.find(
-    (m) => m.email.toLowerCase() === emailNorm
-  );
-  if (!member || member.password !== password) {
-    return { ok: false, error: "wrongCreds" };
-  }
-  const session = createSession(member);
-  const updated = members.map((m) =>
-    m.id === member.id
-      ? { ...m, lastLogin: new Date().toISOString(), language: "en" }
-      : m
-  );
-  store.saveMembers(updated);
-  store.setSession(session);
-  return { ok: true, member, session };
+export async function login(email, password) {
+  const emailNorm = String(email || "").trim().toLowerCase();
+  if (!emailNorm || !password) return { ok: false, error: "required" };
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: emailNorm,
+    password
+  });
+  if (error || !data.user) return { ok: false, error: "wrongCreds" };
+
+  return finishRemoteLogin(data.user);
 }
 
-export function register(email, password) {
+export async function register(email, password) {
   const emailValue = String(email || "").trim();
   const passwordValue = String(password || "");
-  if (!emailValue || !passwordValue) {
-    return { ok: false, error: "required" };
+  if (!emailValue || !passwordValue) return { ok: false, error: "required" };
+
+  const { data, error } = await supabase.auth.signUp({
+    email: emailValue,
+    password: passwordValue,
+    options: { data: { first_name: emailValue.split("@")[0] || "Member" } }
+  });
+  if (error) {
+    return {
+      ok: false,
+      error: error.message && /already|registered|exists/i.test(error.message) ? "exists" : "generic"
+    };
+  }
+  if (!data.user || !data.session) return { ok: false, error: "confirmEmail" };
+
+  return finishRemoteLogin(data.user);
+}
+
+async function finishRemoteLogin(user) {
+  const member = await loadMember(user);
+  if (!member) return { ok: false, error: "database" };
+
+  cacheMember(member);
+  store.setSession(createSession(member));
+  await store.syncRemote(member.id);
+  return { ok: true, member, session: store.getSession() };
+}
+
+async function loadMember(user) {
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id,email,first_name,last_name,role,language")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (profileError) {
+    console.error("[supabase] profile lookup failed", profileError);
+    return null;
   }
 
-  const exists = store
-    .getMembers()
-    .some((member) => member.email.toLowerCase() === emailValue.toLowerCase());
-  if (exists) return { ok: false, error: "exists" };
+  const { data: access, error: accessError } = await supabase
+    .from("module_access")
+    .select("module_id")
+    .eq("user_id", user.id);
+  if (accessError) {
+    console.error("[supabase] access lookup failed", accessError);
+    return null;
+  }
 
-  const member = store.upsertMember({
-    email: emailValue,
-    username: emailValue.split("@")[0] || emailValue,
-    password: passwordValue,
-    firstName: emailValue.split("@")[0] || "Member",
-    lastName: "",
+  const source = profile || {
+    id: user.id,
+    email: user.email || "",
+    first_name: (user.email || "Member").split("@")[0],
+    last_name: "",
+    role: "member",
     language: "en"
-  });
-  if (!member) return { ok: false, error: "generic" };
+  };
+  return {
+    id: source.id,
+    email: source.email || user.email || "",
+    username: (source.email || user.email || "member").split("@")[0],
+    password: "",
+    role: source.role || "member",
+    firstName: source.first_name || "",
+    lastName: source.last_name || "",
+    joined: source.created_at || new Date().toISOString(),
+    lastLogin: new Date().toISOString(),
+    language: "en",
+    enrollments: (access || []).map((row) => row.module_id)
+  };
+}
 
-  const session = createSession(member);
-  store.setSession(session);
-  return { ok: true, member, session };
+function cacheMember(member) {
+  const members = store.getMembers().filter((item) => item.id !== member.id);
+  store.saveMembers([...members, member]);
 }
 
 function createSession(member) {
@@ -60,16 +103,30 @@ function createSession(member) {
   };
 }
 
-export function logout() {
+export async function restoreSession() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session || !data.session.user) {
+    store.setSession(null);
+    return null;
+  }
+  const result = await finishRemoteLogin(data.session.user);
+  if (!result.ok) {
+    store.setSession(null);
+    return null;
+  }
+  return result.member;
+}
+
+export async function logout() {
+  await supabase.auth.signOut();
   store.setSession(null);
 }
 
 export function currentUser() {
   const session = store.getSession();
   if (!session) return null;
-  const member = store.getMembers().find((m) => m.id === session.userId);
-  if (!member) return null;
-  return { ...member, ...session };
+  const member = store.getMembers().find((item) => item.id === session.userId);
+  return member ? { ...member, ...session } : null;
 }
 
 export function isOwner() {

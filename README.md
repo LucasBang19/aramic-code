@@ -57,6 +57,16 @@ Members create their own account from the portal. No email-format or password po
 
 The Admin panel (`#/admin`, bottom-nav Admin) is hidden from normal members and is reserved for the administrator account that will be configured later.
 
+## Supabase
+
+Run `supabase/schema.sql` in the Supabase SQL Editor before using the hosted
+app. It creates the modules, lessons, profiles, access table, RLS policies and
+the signup trigger that grants current modules to new members. The browser only
+uses the public publishable key in `js/supabase.js`; never put a `service_role`
+key in this repository, Vercel client code or any committed `.env` file.
+For immediate access after signup, disable email confirmation in Supabase under
+Authentication → Providers → Email; otherwise members must confirm their email.
+
 ## Member flow
 
 1. **Create an account** → Home shows the available modules as cover cards. Open
@@ -93,7 +103,7 @@ The Admin panel (`#/admin`, bottom-nav Admin) is hidden from normal members and 
 - **Profile / Settings** — profile info and sign out.
 - **English UI** — all visible interface copy and seeded content are in English.
 - **PWA** — `manifest.json`, service worker with offline app-shell cache
-  (`members-ceramic-shell-v9`), installable, SVG + PNG icons (Star of David
+  (`members-ceramic-shell-v10`), installable, SVG + PNG icons (Star of David
   inside a sacred-geometry ring).
 - **Install prompt** — a themed bottom-sheet invite to add the app to the
   home screen. Android/Chromium use the native `beforeinstallprompt`; iOS gets
