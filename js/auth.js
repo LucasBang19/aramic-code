@@ -27,7 +27,11 @@ export async function register(email, password) {
   if (error) {
     return {
       ok: false,
-      error: error.message && /already|registered|exists/i.test(error.message) ? "exists" : "generic"
+      error: error.message && /already|registered|exists/i.test(error.message)
+        ? "exists"
+        : error.message && /provider|signups are disabled|signup is disabled/i.test(error.message)
+          ? "providerDisabled"
+          : "generic"
     };
   }
   if (!data.user || !data.session) return { ok: false, error: "confirmEmail" };

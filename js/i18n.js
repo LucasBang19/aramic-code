@@ -39,6 +39,7 @@ const DICT = {
       accountExists: "An account with this email already exists. Sign in instead.",
       confirmEmail: "Check your email to confirm your account before signing in.",
       databaseError: "The account service is unavailable. Please try again shortly.",
+      providerDisabled: "Email signups are disabled in Supabase. Enable the Email provider and try again.",
       wrongCreds: "The gates remain closed. Check your credentials and try again.",
       genericError: "Something went wrong. Please try again.",
       invalidEmail: "Enter a valid email address.",

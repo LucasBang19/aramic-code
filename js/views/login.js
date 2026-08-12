@@ -122,11 +122,15 @@ export function renderLogin(container) {
           const message =
             result.error === "exists"
               ? t("auth.accountExists")
+              : result.error === "providerDisabled"
+                ? t("auth.providerDisabled")
               : result.error === "confirmEmail"
                 ? t("auth.confirmEmail")
                 : result.error === "database"
                   ? t("auth.databaseError")
-                  : t("auth.wrongCreds");
+                  : mode === "signup"
+                    ? t("auth.databaseError")
+                    : t("auth.wrongCreds");
           errorBox.textContent = message;
           errorBox.hidden = false;
         }
