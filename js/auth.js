@@ -56,7 +56,29 @@ async function loadMember(user) {
     return null;
   }
 
-  const { data: access, error: accessError } = await supabase
+  let source = profile;
+  if (!source) {
+    const profileDraft = {
+      id: user.id,
+      email: user.email || "",
+      first_name: (user.email || "Member").split("@")[0],
+      last_name: "",
+      role: "member",
+      language: "en"
+    };
+    const { data: createdProfile, error: createProfileError } = await supabase
+      .from("profiles")
+      .upsert(profileDraft, { onConflict: "id" })
+      .select("id,email,first_name,last_name,role,language")
+      .single();
+    if (createProfileError) {
+      console.error("[supabase] profile creation failed", createProfileError);
+      return null;
+    }
+    source = createdProfile;
+  }
+
+  let { data: access, error: accessError } = await supabase
     .from("module_access")
     .select("module_id")
     .eq("user_id", user.id);
@@ -65,14 +87,30 @@ async function loadMember(user) {
     return null;
   }
 
-  const source = profile || {
-    id: user.id,
-    email: user.email || "",
-    first_name: (user.email || "Member").split("@")[0],
-    last_name: "",
-    role: "member",
-    language: "en"
-  };
+  if (!access || access.length === 0) {
+    const { data: modules, error: modulesError } = await supabase
+      .from("modules")
+      .select("id");
+    if (modulesError) {
+      console.error("[supabase] module lookup failed", modulesError);
+      return null;
+    }
+    const rows = (modules || []).map((module) => ({
+      user_id: user.id,
+      module_id: module.id
+    }));
+    if (rows.length) {
+      const { error: accessInsertError } = await supabase
+        .from("module_access")
+        .upsert(rows, { onConflict: "user_id,module_id" });
+      if (accessInsertError) {
+        console.error("[supabase] module access creation failed", accessInsertError);
+        return null;
+      }
+      access = rows.map((row) => ({ module_id: row.module_id }));
+    }
+  }
+
   return {
     id: source.id,
     email: source.email || user.email || "",
