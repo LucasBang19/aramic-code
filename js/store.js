@@ -64,7 +64,7 @@ export function boot() {
   }
   // This release is English-only. Reset an older language preference as part
   // of the content migration so an existing browser cannot render stale copy.
-  if (getLanguage() !== DEFAULT_LANG) write(KEYS.lang, DEFAULT_LANG);
+  write(KEYS.lang, DEFAULT_LANG);
 }
 
 function migrate() {
@@ -280,12 +280,12 @@ export function setSession(session) {
 }
 
 export function getLanguage() {
-  return read(KEYS.lang, DEFAULT_LANG);
+  return DEFAULT_LANG;
 }
 
-export function setLanguage(lang) {
-  write(KEYS.lang, lang);
-  emit("language", lang);
+export function setLanguage() {
+  write(KEYS.lang, DEFAULT_LANG);
+  emit("language", DEFAULT_LANG);
 }
 
 export function clearAll() {
