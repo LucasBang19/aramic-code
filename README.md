@@ -103,7 +103,7 @@ Authentication → Providers → Email; otherwise members must confirm their ema
 - **Profile / Settings** — profile info and sign out.
 - **English UI** — all visible interface copy and seeded content are in English.
 - **PWA** — `manifest.json`, service worker with offline app-shell cache
-  (`members-ceramic-shell-v10`), installable, SVG + PNG icons (Star of David
+  (`members-ceramic-shell-v11`), installable, SVG + PNG icons (Star of David
   inside a sacred-geometry ring).
 - **Install prompt** — a themed bottom-sheet invite to add the app to the
   home screen. Android/Chromium use the native `beforeinstallprompt`; iOS gets
@@ -129,8 +129,9 @@ app/
     store.js          localStorage persistence + pub/sub + access helpers
     auth.js           login / logout / session / owner check
     ui.js             icons, logo, spinner, toast, modal, confirm, thumbnails, covers
-    router.js         hash SPA router with auth + owner guards
-    views/            login · home (modules) · library · area · detail · admin · profile
+    router.js         path/hash SPA router with auth + owner guards
+    views/            login · create-user · home · library · area · detail · admin · profile
+  vercel.json         rewrite for direct routes such as /create-user
   tools/
     generate-icons.ps1  regenerates icons/icon-*.png (PowerShell + System.Drawing)
 ```

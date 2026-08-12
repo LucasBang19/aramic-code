@@ -3,6 +3,7 @@ import * as store from "./store.js";
 import { t } from "./i18n.js";
 
 import { renderLogin } from "./views/login.js";
+import { renderCreateUser } from "./views/create-user.js";
 import { renderHome } from "./views/home.js";
 import { renderLibrary } from "./views/library.js";
 import { renderArea } from "./views/area.js";
@@ -12,6 +13,7 @@ import { renderProfile } from "./views/profile.js";
 
 const ROUTES = [
   { name: "login", pattern: /^login$/, render: renderLogin, public: true },
+  { name: "create-user", pattern: /^create-user$/, render: renderCreateUser, public: true },
   { name: "home", pattern: /^home$/, render: renderHome },
   { name: "library", pattern: /^library$/, render: renderLibrary },
   { name: "area", pattern: /^area\/(.+)$/, render: renderArea },
@@ -24,15 +26,20 @@ const DEFAULT = "home";
 
 function parseHash() {
   const hash = window.location.hash.replace(/^#\/?/, "");
-  return hash.split("/").filter(Boolean).map(decodeURIComponent);
+  const pathname = window.location.pathname
+    .replace(/^\/+|\/+$/g, "")
+    .replace(/^index\.html$/, "");
+  return (hash || pathname).split("/").filter(Boolean).map(decodeURIComponent);
 }
 
 export function navigate(path) {
-  const clean = path.replace(/^#/, "");
-  if ("#" + clean === window.location.hash) {
+  const clean = path.replace(/^#\/?/, "").replace(/^\/+/, "");
+  const target = clean ? `/${clean}` : "/";
+  if (window.location.pathname === target && !window.location.hash) {
     render();
   } else {
-    window.location.hash = "#" + clean;
+    window.history.pushState({}, "", target);
+    render();
   }
 }
 
@@ -50,7 +57,7 @@ function matchRoute(segments) {
 
 function updateChrome(routeName) {
   const nav = document.getElementById("bottom-nav");
-  if (nav) nav.hidden = routeName === "login";
+  if (nav) nav.hidden = routeName === "login" || routeName === "create-user";
 
   document.querySelectorAll("[data-nav]").forEach((item) => {
     const active =
@@ -106,7 +113,7 @@ function render() {
     route = ROUTES.find((r) => r.name === DEFAULT);
   }
 
-  if (authed && route.name === "login") {
+  if (authed && (route.name === "login" || route.name === "create-user")) {
     route = ROUTES.find((r) => r.name === DEFAULT);
   }
 
@@ -143,6 +150,7 @@ function render() {
 
 export function start() {
   window.addEventListener("hashchange", render);
+  window.addEventListener("popstate", render);
   store.onChange((event) => {
     if (event === "language") render();
     else if (event === "session") render();
