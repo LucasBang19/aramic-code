@@ -14,7 +14,7 @@ const KEYS = {
   areas: "ac_areas_v1",
   session: "ac_session_v1",
   lang: "ac_lang_v1",
-  seeded: "ac_seeded_v2"
+  seeded: "ac_seeded_v3"
 };
 
 const listeners = new Set();

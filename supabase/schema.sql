@@ -166,6 +166,30 @@ on conflict (id) do update set
   duration = excluded.duration,
   sort_order = excluded.sort_order;
 
+-- Replace placeholder media with the real CURSO1 files deployed in /assets.
+delete from public.lessons where id = 'lesson-day-7';
+insert into public.lessons (id, module_id, title, description, type, url, category, tags, thumbnail, duration, sort_order)
+values ('lesson-frequency', 'a-aramaic-code', '5 Minutes Aramaic Frequency', 'Listen to this lesson from The Aramaic Code as part of your daily journey.', 'audio', '/assets/course1/module-1/lesson-02-aramaic-frequency.mp3', 'meditation', '["aramaic","the-aramaic-code"]', '/assets/aramaic.jpg', 304, 1)
+on conflict (id) do update set
+  module_id = excluded.module_id, title = excluded.title, description = excluded.description,
+  type = excluded.type, url = excluded.url, category = excluded.category, tags = excluded.tags,
+  thumbnail = excluded.thumbnail, duration = excluded.duration, sort_order = excluded.sort_order;
+
+update public.lessons set type = 'file', description = 'Read the foundational prayer lesson from The Aramaic Code.', url = '/assets/course1/module-1/lesson-01-prayer.pdf', thumbnail = '/assets/aramaic.jpg', duration = 0, sort_order = 0 where id = 'lesson-intro';
+update public.lessons set type = 'audio', url = '/assets/course1/module-1/lesson-03-day-1.m4a', thumbnail = '/assets/aramaic.jpg', duration = 374, sort_order = 2 where id = 'lesson-day-1';
+update public.lessons set type = 'audio', url = '/assets/course1/module-1/lesson-04-day-2.m4a', thumbnail = '/assets/aramaic.jpg', duration = 373, sort_order = 3 where id = 'lesson-day-2';
+update public.lessons set type = 'audio', url = '/assets/course1/module-1/lesson-05-day-3.m4a', thumbnail = '/assets/aramaic.jpg', duration = 386, sort_order = 4 where id = 'lesson-day-3';
+update public.lessons set type = 'audio', url = '/assets/course1/module-1/lesson-06-day-4.m4a', thumbnail = '/assets/aramaic.jpg', duration = 377, sort_order = 5 where id = 'lesson-day-4';
+update public.lessons set type = 'audio', url = '/assets/course1/module-1/lesson-07-day-5.m4a', thumbnail = '/assets/aramaic.jpg', duration = 333, sort_order = 6 where id = 'lesson-day-5';
+update public.lessons set type = 'audio', url = '/assets/course1/module-1/lesson-08-day-6.m4a', thumbnail = '/assets/aramaic.jpg', duration = 465, sort_order = 7 where id = 'lesson-day-6';
+update public.lessons set type = 'audio', url = '/assets/course1/module-1/lesson-09-sacred-hours.mp3', thumbnail = '/assets/aramaic.jpg', duration = 219, sort_order = 8 where id = 'lesson-bonus-1';
+update public.lessons set type = 'audio', url = '/assets/course1/module-1/lesson-10-atmosphere-shift.mp3', thumbnail = '/assets/aramaic.jpg', duration = 199, sort_order = 9 where id = 'lesson-bonus-2';
+update public.lessons set type = 'audio', url = '/assets/course1/module-1/lesson-11-the-12-words.mp3', thumbnail = '/assets/aramaic.jpg', duration = 355, sort_order = 10 where id = 'lesson-bonus-3';
+update public.lessons set type = 'audio', url = '/assets/course1/module-1/lesson-12-ephphatha.mp3', thumbnail = '/assets/aramaic.jpg', duration = 45, sort_order = 11 where id = 'lesson-bonus-4';
+update public.lessons set type = 'audio', url = '/assets/course1/module-1/lesson-13-miracle-generator.mp3', thumbnail = '/assets/aramaic.jpg', duration = 336, sort_order = 12 where id = 'lesson-bonus-5';
+update public.lessons set type = 'audio', url = '/assets/course1/module-1/lesson-14-covenant-hour.m4a', thumbnail = '/assets/aramaic.jpg', duration = 385, sort_order = 13 where id = 'lesson-covenant';
+update public.lessons set type = 'audio', url = '/assets/course1/module-2/lesson-01-who-you-are.mp3', thumbnail = '/assets/aramaic.jpg', duration = 385, sort_order = 0 where id = 'lesson-bonus-who-you-are';
+
 -- Backfill accounts that existed before this schema was installed.
 insert into public.profiles (id, email)
 select id, coalesce(email, '') from auth.users
