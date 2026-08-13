@@ -103,7 +103,7 @@ Authentication → Providers → Email; otherwise members must confirm their ema
 - **Profile / Settings** — profile info and sign out.
 - **English UI** — all visible interface copy and seeded content are in English.
 - **PWA** — `manifest.json`, service worker with offline app-shell cache
-  (`members-ceramic-shell-v12`), installable, SVG + PNG icons (Star of David
+  (`members-ceramic-shell-v13`), installable, SVG + PNG icons (Star of David
   inside a sacred-geometry ring).
 - **Install prompt** — a themed bottom-sheet invite to add the app to the
   home screen. Android/Chromium use the native `beforeinstallprompt`; iOS gets

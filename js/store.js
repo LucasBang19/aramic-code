@@ -227,20 +227,37 @@ export async function syncRemote(userId) {
     createdAt: module.created_at,
     isRemote: true
   }));
-  const items = (lessonsResult.data || []).map((lesson) => ({
-    id: lesson.id,
-    title: lesson.title,
-    description: lesson.description || "",
-    type: lesson.type || "video",
-    url: lesson.url || "",
-    category: lesson.category || "teaching",
-    tags: Array.isArray(lesson.tags) ? lesson.tags : [],
-    thumbnail: lesson.thumbnail || "",
-    duration: lesson.duration || 0,
-    areaId: lesson.module_id,
-    createdAt: lesson.created_at,
-    isRemote: true
-  }));
+  const remoteLessons = new Map((lessonsResult.data || []).map((lesson) => [lesson.id, lesson]));
+  const localCourseLessons = SEED_ITEMS.map((seed) => {
+    const remote = remoteLessons.get(seed.id);
+    return {
+      ...seed,
+      title: (remote && remote.title) || seed.title,
+      description: (remote && remote.description) || seed.description,
+      createdAt: (remote && remote.created_at) || seed.createdAt,
+      isRemote: !!remote
+    };
+  });
+  const seededIds = new Set(SEED_ITEMS.map((seed) => seed.id));
+  const items = [
+    ...localCourseLessons,
+    ...(lessonsResult.data || [])
+      .filter((lesson) => !seededIds.has(lesson.id) && lesson.id !== "lesson-day-7")
+      .map((lesson) => ({
+        id: lesson.id,
+        title: lesson.title,
+        description: lesson.description || "",
+        type: lesson.type || "video",
+        url: lesson.url || "",
+        category: lesson.category || "teaching",
+        tags: Array.isArray(lesson.tags) ? lesson.tags : [],
+        thumbnail: lesson.thumbnail || "",
+        duration: lesson.duration || 0,
+        areaId: lesson.module_id,
+        createdAt: lesson.created_at,
+        isRemote: true
+      }))
+  ];
   const enrollments = (accessResult.data || []).map((row) => row.module_id);
   const members = getMembers();
   const member = members.find((item) => item.id === userId);

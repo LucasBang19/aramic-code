@@ -1,4 +1,4 @@
-const CACHE_NAME = "members-ceramic-shell-v12";
+const CACHE_NAME = "members-ceramic-shell-v13";
 const APP_SHELL = [
   "./",
   "./manifest.json",
