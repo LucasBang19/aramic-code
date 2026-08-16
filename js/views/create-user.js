@@ -107,11 +107,13 @@ export function renderCreateUser(container) {
     const message =
       result.error === "exists"
         ? t("auth.accountExists")
+        : result.error === "notAuthorized"
+        ? t("auth.notAuthorized")
         : result.error === "providerDisabled"
-          ? t("auth.providerDisabled")
-          : result.error === "confirmEmail"
-            ? t("auth.confirmEmail")
-            : t("auth.databaseError");
+        ? t("auth.providerDisabled")
+        : result.error === "confirmEmail"
+        ? t("auth.confirmEmail")
+        : t("auth.databaseError");
     errorBox.textContent = message;
     errorBox.hidden = false;
   });

@@ -50,10 +50,17 @@ function card(item) {
     title: (item.titleI18n && item.titleI18n[l]) || item.title,
     description: (item.descI18n && item.descI18n[l]) || item.description
   };
+  const isCompleted = store.isLessonCompleted(item.id);
+
   return `
-    <article class="card" data-id="${escapeHtml(item.id)}" tabindex="0" role="link" aria-label="${escapeHtml(localized.title)}">
+    <article class="card ${isCompleted ? "card-completed" : ""}" data-id="${escapeHtml(item.id)}" tabindex="0" role="link" aria-label="${escapeHtml(localized.title)}">
       <div class="card-thumb">
         <img src="${escapeHtml(thumb.src)}" alt="" loading="lazy" decoding="async" />
+        ${
+          isCompleted
+            ? `<div class="card-completed-badge">${svgIcon("check", "icon icon-xs")} Mastered</div>`
+            : ""
+        }
       </div>
       <div class="card-body">
         <div class="card-badges">
@@ -64,7 +71,7 @@ function card(item) {
         <p class="card-desc">${escapeHtml(snippet(localized.description, 110))}</p>
         <div class="card-footer">
           <time class="card-date" datetime="${escapeHtml(item.createdAt || "")}">${escapeHtml(formatDate(item.createdAt, l))}</time>
-          <span class="card-open" aria-hidden="true">→</span>
+          <span class="card-open" aria-hidden="true">${isCompleted ? "Listen Again →" : "Start Frequency →"}</span>
         </div>
       </div>
     </article>

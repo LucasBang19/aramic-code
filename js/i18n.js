@@ -37,6 +37,7 @@ const DICT = {
       switchToLogin: "Already have an account? Sign in",
       welcome: "Welcome to the Portal.",
       accountExists: "An account with this email already exists. Sign in instead.",
+      notAuthorized: "This email is not registered as an authorized buyer. Please complete your purchase to activate your access.",
       confirmEmail: "Check your email to confirm your account before signing in.",
       databaseError: "The account service is unavailable. Please try again shortly.",
       providerDisabled: "Email signups are disabled in Supabase. Enable the Email provider and try again.",

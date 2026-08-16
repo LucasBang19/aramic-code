@@ -46,7 +46,23 @@ const ICONS = {
   download:
     '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>',
   edit:
-    '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/>'
+    '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/>',
+  lock:
+    '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  unlock:
+    '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>',
+  flame:
+    '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/>',
+  sparkles:
+    '<path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"/>',
+  trophy:
+    '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H8v4h8v-4h-1c-.55 0-1-.45-1-1v-2.34"/><path d="M6 4h12a2 2 0 0 1 2 2v3a6 6 0 0 1-6 6h0a6 6 0 0 1-6-6V6a2 2 0 0 1 2-2z"/>',
+  bolt:
+    '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>',
+  check:
+    '<polyline points="20 6 9 17 4 12"/>',
+  crown:
+    '<path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/>'
 };
 
 export function svgIcon(name, cls) {
@@ -152,6 +168,57 @@ export function openModal({ title, body, footer, onMount }) {
   });
   document.addEventListener("keydown", onKey);
   return { modal, close };
+}
+
+export function openUnlockModal(area) {
+  const l = lang();
+  const checkoutUrl = area.checkoutUrl || "https://thearamaiccode.com";
+  const typeKicker =
+    area.productType === "upsell"
+      ? "👑 MASTER TRANSMISSION PORTAL"
+      : area.productType === "orderbump"
+      ? "✦ SECRET SACRED EXPANSION"
+      : "🔒 LOCKED SACRED PORTAL";
+
+  const body = `
+    <div class="unlock-modal-content">
+      <div class="unlock-icon-wrapper">
+        <div class="unlock-icon-aura"></div>
+        ${svgIcon("lock", "unlock-icon-svg")}
+      </div>
+      <span class="unlock-kicker">${escapeHtml(typeKicker)}</span>
+      <h3 class="unlock-title">${escapeHtml(area.title)}</h3>
+      <p class="unlock-desc">${escapeHtml(area.description || "Unlock full access to this sacred frequency, exclusive teachings, and ancient abundance codes.")}</p>
+      
+      <div class="unlock-perks">
+        <div class="unlock-perk">
+          <span class="unlock-perk-icon">✦</span>
+          <span>Instant lifetime access in your member portal</span>
+        </div>
+        <div class="unlock-perk">
+          <span class="unlock-perk-icon">✦</span>
+          <span>HD audio frequencies with offline listening option</span>
+        </div>
+        <div class="unlock-perk">
+          <span class="unlock-perk-icon">✦</span>
+          <span>Accelerated divine manifestation & wealth alignment</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const footer = `
+    <button type="button" class="btn btn-secondary" data-close>Close</button>
+    <a class="btn btn-primary btn-gold-glow" href="${escapeHtml(checkoutUrl)}" target="_blank" rel="noopener noreferrer">
+      ${svgIcon("bolt", "icon icon-sm")} Get Instant Access →
+    </a>
+  `;
+
+  return openModal({
+    title: "Unlock Sacred Access",
+    body,
+    footer
+  });
 }
 
 export function confirmDialog({ title, message, confirmLabel, danger }) {
@@ -269,6 +336,16 @@ export function formatDuration(seconds) {
 export function typeBadge(type) {
   const icon = { video: "play", audio: "audio", file: "file", link: "link" }[type] || "link";
   return `<span class="type-badge type-badge-${escapeHtml(type)}">${svgIcon(icon, "icon icon-sm")}${escapeHtml(typeName(type, lang()))}</span>`;
+}
+
+export function productBadge(productType) {
+  if (productType === "upsell") {
+    return `<span class="badge badge-upsell">${svgIcon("crown", "icon icon-xs")} MASTER TRANSMISSION</span>`;
+  }
+  if (productType === "orderbump") {
+    return `<span class="badge badge-orderbump">${svgIcon("sparkles", "icon icon-xs")} SECRET CHAMBER</span>`;
+  }
+  return `<span class="badge badge-main">✦ CORE ACCESS</span>`;
 }
 
 export function categoryLabel(slug) {

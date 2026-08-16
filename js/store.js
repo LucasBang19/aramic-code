@@ -3,18 +3,21 @@ import {
   SEED_ITEMS,
   SEED_AREAS,
   defaultEnrollments,
-  assignAreaToItem
+  assignAreaToItem,
+  MAIN_MODULE_ID
 } from "./seeds.js";
 import { DEFAULT_LANG } from "./i18n.js";
 import { supabase } from "./supabase.js";
 
 const KEYS = {
   members: "ac_members_v1",
-  content: "ac_content_v1",
-  areas: "ac_areas_v1",
+  content: "ac_content_v2",
+  areas: "ac_areas_v2",
   session: "ac_session_v1",
   lang: "ac_lang_v1",
-  seeded: "ac_seeded_v3"
+  seeded: "ac_seeded_v4",
+  completed: "ac_completed_lessons_v1",
+  streak: "ac_streak_data_v1"
 };
 
 const listeners = new Set();
@@ -63,39 +66,29 @@ export function boot() {
   } else {
     migrate();
   }
-  // This release is English-only. Reset an older language preference as part
-  // of the content migration so an existing browser cannot render stale copy.
   write(KEYS.lang, DEFAULT_LANG);
+  recordActivity();
 }
 
 function migrate() {
-  const areas = read(KEYS.areas, undefined);
-  if (areas === undefined) {
-    write(KEYS.areas, SEED_AREAS);
-  }
+  // Always load fresh 5 canonical products and lessons
+  write(KEYS.areas, SEED_AREAS);
+  write(KEYS.content, SEED_ITEMS);
 
   const members = read(KEYS.members, SEED_MEMBERS);
-  const hasMemberChange = members.some((m) => !Array.isArray(m.enrollments));
-  if (hasMemberChange) {
-    write(
-      KEYS.members,
-      members.map((m) =>
-        Array.isArray(m.enrollments) ? m : { ...m, enrollments: defaultEnrollments(m) }
-      )
-    );
-  }
-
-  const items = read(KEYS.content, []);
-  const hasItemChange = items.some((i) => !i.areaId);
-  if (hasItemChange) {
-    write(
-      KEYS.content,
-      items.map((i) => (i.areaId ? i : { ...i, areaId: assignAreaToItem(i) }))
-    );
-  }
+  const updatedMembers = members.map((m) => {
+    if (!Array.isArray(m.enrollments) || m.enrollments.length === 0) {
+      return { ...m, enrollments: defaultEnrollments(m) };
+    }
+    const cleaned = m.enrollments.filter((id) => id !== "a-aramaic-code-bonus");
+    return { ...m, enrollments: cleaned.length ? cleaned : [MAIN_MODULE_ID] };
+  });
+  write(KEYS.members, updatedMembers);
 }
 
-/* ---------- Members ---------- */
+/* =========================================================================
+   MEMBERS
+   ========================================================================= */
 
 export function getMembers() {
   return read(KEYS.members, SEED_MEMBERS);
@@ -125,11 +118,11 @@ export function upsertMember(data) {
     ...data,
     id: uid("m-"),
     role: "member",
-    enrollments: Array.isArray(data.enrollments)
+    enrollments: Array.isArray(data.enrollments) && data.enrollments.length > 0
       ? data.enrollments
-      : getAreas().map((area) => area.id),
+      : [MAIN_MODULE_ID],
     joined: now,
-    lastLogin: "",
+    lastLogin: now,
     updatedAt: now
   };
   members.push(created);
@@ -151,17 +144,21 @@ export function setMemberEnrollment(memberId, areaId, granted) {
   if (member.role === "owner") return false;
   const enrollments = Array.isArray(member.enrollments) ? member.enrollments : [];
   const next = granted
-    ? enrollments.includes(areaId) ? enrollments : [...enrollments, areaId]
+    ? enrollments.includes(areaId)
+      ? enrollments
+      : [...enrollments, areaId]
     : enrollments.filter((id) => id !== areaId);
   members[idx] = { ...member, enrollments: next };
   saveMembers(members);
   return true;
 }
 
-/* ---------- Content ---------- */
+/* =========================================================================
+   CONTENT (LESSONS)
+   ========================================================================= */
 
 export function getContent() {
-  return read(KEYS.content, []);
+  return read(KEYS.content, SEED_ITEMS);
 }
 
 export function getItem(id) {
@@ -194,86 +191,40 @@ export function deleteItem(id) {
   return true;
 }
 
-/* ---------- Areas (courses) ---------- */
+/* =========================================================================
+   AREAS (MODULES / PRODUCTS)
+   ========================================================================= */
 
 export function getAreas() {
   const areas = read(KEYS.areas, undefined);
-  return Array.isArray(areas) ? areas : SEED_AREAS;
+  const rawList = Array.isArray(areas) && areas.length > 0 ? areas : SEED_AREAS;
+  const areaMap = new Map(rawList.map((a) => [a.id, a]));
+
+  // Always guarantee all 5 canonical products are present in order
+  const result = SEED_AREAS.map((seedArea) => {
+    const existing = areaMap.get(seedArea.id);
+    return existing
+      ? {
+          ...seedArea,
+          ...existing,
+          productType: existing.productType || seedArea.productType || "main",
+          checkoutUrl: existing.checkoutUrl || seedArea.checkoutUrl || ""
+        }
+      : seedArea;
+  });
+
+  // Include any custom areas created by the admin (excluding legacy duplicates)
+  for (const [id, a] of areaMap) {
+    if (!SEED_AREAS.some((s) => s.id === id) && id !== "a-aramaic-code-bonus") {
+      result.push(a);
+    }
+  }
+
+  return result;
 }
 
 export function getArea(id) {
   return getAreas().find((a) => a.id === id) || null;
-}
-
-export async function syncRemote(userId) {
-  if (!userId) return false;
-
-  const [modulesResult, lessonsResult, accessResult] = await Promise.all([
-    supabase.from("modules").select("*").order("sort_order", { ascending: true }),
-    supabase.from("lessons").select("*").order("sort_order", { ascending: true }),
-    supabase.from("module_access").select("module_id").eq("user_id", userId)
-  ]);
-
-  if (modulesResult.error || lessonsResult.error || accessResult.error) {
-    console.warn("[supabase] content sync failed", modulesResult.error || lessonsResult.error || accessResult.error);
-    return false;
-  }
-
-  const areas = (modulesResult.data || []).map((module) => ({
-    id: module.id,
-    title: module.title,
-    description: module.description || "",
-    cover: module.cover || "",
-    createdAt: module.created_at,
-    isRemote: true
-  }));
-  const remoteLessons = new Map((lessonsResult.data || []).map((lesson) => [lesson.id, lesson]));
-  const localCourseLessons = SEED_ITEMS.map((seed) => {
-    const remote = remoteLessons.get(seed.id);
-    return {
-      ...seed,
-      title: (remote && remote.title) || seed.title,
-      description: (remote && remote.description) || seed.description,
-      createdAt: (remote && remote.created_at) || seed.createdAt,
-      isRemote: !!remote
-    };
-  });
-  const seededIds = new Set(SEED_ITEMS.map((seed) => seed.id));
-  const items = [
-    ...localCourseLessons,
-    ...(lessonsResult.data || [])
-      .filter((lesson) => !seededIds.has(lesson.id) && lesson.id !== "lesson-day-7")
-      .map((lesson) => ({
-        id: lesson.id,
-        title: lesson.title,
-        description: lesson.description || "",
-        type: lesson.type || "video",
-        url: lesson.url || "",
-        category: lesson.category || "teaching",
-        tags: Array.isArray(lesson.tags) ? lesson.tags : [],
-        thumbnail: lesson.thumbnail || "",
-        duration: lesson.duration || 0,
-        areaId: lesson.module_id,
-        createdAt: lesson.created_at,
-        isRemote: true
-      }))
-  ];
-  const enrollments = (accessResult.data || []).map((row) => row.module_id);
-  const members = getMembers();
-  const member = members.find((item) => item.id === userId);
-  if (member) {
-    saveMembers(
-      members.map((item) =>
-        item.id === userId ? { ...item, enrollments, language: DEFAULT_LANG } : item
-      )
-    );
-  }
-
-  write(KEYS.areas, areas);
-  write(KEYS.content, items);
-  emit("areas");
-  emit("content");
-  return true;
 }
 
 export function saveAreas(areas) {
@@ -292,7 +243,14 @@ export function upsertArea(data) {
     saveAreas(areas);
     return updated;
   }
-  const created = { ...data, id: uid("a-"), createdAt: now, updatedAt: now };
+  const created = {
+    ...data,
+    id: uid("a-"),
+    productType: data.productType || "main",
+    checkoutUrl: data.checkoutUrl || "",
+    createdAt: now,
+    updatedAt: now
+  };
   areas.push(created);
   saveAreas(areas);
   return created;
@@ -309,14 +267,14 @@ export function deleteArea(id) {
   return true;
 }
 
-/* ---------- Access ---------- */
+/* =========================================================================
+   ACCESS & LOCKED MODULE LOGIC
+   ========================================================================= */
 
 export function canAccessArea(user, areaId) {
   if (!user) return false;
   if (user.role === "owner") return true;
-  return (
-    Array.isArray(user.enrollments) && user.enrollments.includes(areaId)
-  );
+  return Array.isArray(user.enrollments) && user.enrollments.includes(areaId);
 }
 
 export function canAccessItem(user, item) {
@@ -332,6 +290,18 @@ export function getAccessibleAreas(user) {
   return areas.filter((a) => ids.has(a.id));
 }
 
+export function getAllAreasWithAccess(user) {
+  const areas = getAreas();
+  return areas.map((area) => {
+    const isAccessible = canAccessArea(user, area.id);
+    return {
+      ...area,
+      isAccessible,
+      isLocked: !isAccessible
+    };
+  });
+}
+
 export function getAccessibleItems(user) {
   const items = getContent();
   if (!user || user.role === "owner") return items;
@@ -339,7 +309,260 @@ export function getAccessibleItems(user) {
   return items.filter((i) => ids.has(i.areaId));
 }
 
-/* ---------- Session & language ---------- */
+/* =========================================================================
+   GAMIFICATION: PROGRESS, STREAK & PROSPERITY AWAKENING
+   ========================================================================= */
+
+export function getCompletedLessons() {
+  return read(KEYS.completed, []);
+}
+
+export function isLessonCompleted(lessonId) {
+  return getCompletedLessons().includes(lessonId);
+}
+
+export function setLessonCompleted(lessonId, completed = true) {
+  const list = getCompletedLessons();
+  const exists = list.includes(lessonId);
+  if (completed && !exists) {
+    const updated = [...list, lessonId];
+    write(KEYS.completed, updated);
+    incrementDailyStreak();
+    emit("progress", { lessonId, completed: true });
+    return true;
+  }
+  if (!completed && exists) {
+    const updated = list.filter((id) => id !== lessonId);
+    write(KEYS.completed, updated);
+    emit("progress", { lessonId, completed: false });
+    return false;
+  }
+  return exists;
+}
+
+export function toggleLessonCompleted(lessonId) {
+  const state = isLessonCompleted(lessonId);
+  return setLessonCompleted(lessonId, !state);
+}
+
+export function getStreakData() {
+  const fallback = {
+    currentStreak: 1,
+    bestStreak: 1,
+    lastActiveDate: new Date().toISOString().slice(0, 10),
+    lastCompletedDate: null,
+    daysInactive: 0
+  };
+  return read(KEYS.streak, fallback);
+}
+
+function getTodayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getYesterdayStr() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+export function recordActivity() {
+  const streak = getStreakData();
+  const today = getTodayStr();
+  const yesterday = getYesterdayStr();
+
+  if (!streak.lastActiveDate) {
+    streak.lastActiveDate = today;
+    streak.currentStreak = 1;
+    streak.daysInactive = 0;
+    write(KEYS.streak, streak);
+    return streak;
+  }
+
+  const lastActive = new Date(streak.lastActiveDate);
+  const now = new Date(today);
+  const diffTime = Math.abs(now - lastActive);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  streak.daysInactive = diffDays;
+
+  if (streak.lastActiveDate === today) {
+    // Already recorded today
+    write(KEYS.streak, streak);
+    return streak;
+  }
+
+  if (streak.lastActiveDate === yesterday) {
+    // Active yesterday, so streak remains alive!
+    streak.lastActiveDate = today;
+    streak.daysInactive = 0;
+  } else if (diffDays > 1) {
+    // Inactive for more than 1 day: reset streak to 1 to incentivize restarting
+    streak.currentStreak = 1;
+    streak.lastActiveDate = today;
+    streak.daysInactive = diffDays;
+  }
+
+  write(KEYS.streak, streak);
+  emit("streak", streak);
+  return streak;
+}
+
+export function incrementDailyStreak() {
+  const streak = getStreakData();
+  const today = getTodayStr();
+
+  if (streak.lastCompletedDate !== today) {
+    streak.currentStreak = (streak.currentStreak || 0) + 1;
+    if (streak.currentStreak > (streak.bestStreak || 0)) {
+      streak.bestStreak = streak.currentStreak;
+    }
+    streak.lastCompletedDate = today;
+    streak.lastActiveDate = today;
+    streak.daysInactive = 0;
+    write(KEYS.streak, streak);
+    emit("streak", streak);
+  }
+  return streak;
+}
+
+export function getJourneyProgress(user) {
+  const accessibleItems = getAccessibleItems(user);
+  const completedList = getCompletedLessons();
+  const completedCount = accessibleItems.filter((i) =>
+    completedList.includes(i.id)
+  ).length;
+  const totalLessons = accessibleItems.length || 1;
+  const percent = Math.min(
+    100,
+    Math.round((completedCount / totalLessons) * 100)
+  );
+
+  // Prioritize uncompleted audio frequencies to listen next
+  const nextLesson =
+    accessibleItems.find((i) => i.type === "audio" && !completedList.includes(i.id)) ||
+    accessibleItems.find((i) => !completedList.includes(i.id)) ||
+    accessibleItems[0] ||
+    null;
+
+  return {
+    totalLessons: accessibleItems.length,
+    completedCount,
+    percent,
+    nextLesson
+  };
+}
+
+/* =========================================================================
+   REMOTE SUPABASE SYNC
+   ========================================================================= */
+
+export async function syncRemote(userId) {
+  if (!userId) return false;
+
+  const [modulesResult, lessonsResult, accessResult] = await Promise.all([
+    supabase.from("modules").select("*").order("sort_order", { ascending: true }),
+    supabase.from("lessons").select("*").order("sort_order", { ascending: true }),
+    supabase.from("module_access").select("module_id").eq("user_id", userId)
+  ]);
+
+  if (modulesResult.error || lessonsResult.error || accessResult.error) {
+    console.warn(
+      "[supabase] content sync failed",
+      modulesResult.error || lessonsResult.error || accessResult.error
+    );
+    return false;
+  }
+
+  const remoteAreasMap = new Map((modulesResult.data || []).map((m) => [m.id, m]));
+  const areas = SEED_AREAS.map((seedArea) => {
+    const remote = remoteAreasMap.get(seedArea.id);
+    return {
+      ...seedArea,
+      title: (remote && remote.title) || seedArea.title,
+      description: (remote && remote.description) || seedArea.description,
+      cover: (remote && remote.cover) || seedArea.cover,
+      productType: (remote && remote.product_type) || seedArea.productType || "main",
+      checkoutUrl: (remote && remote.checkout_url) || seedArea.checkoutUrl || "",
+      isRemote: !!remote
+    };
+  });
+  for (const [id, m] of remoteAreasMap) {
+    if (!SEED_AREAS.some((s) => s.id === id) && id !== "a-aramaic-code-bonus") {
+      areas.push({
+        id: m.id,
+        title: m.title,
+        description: m.description || "",
+        cover: m.cover || "",
+        productType: m.product_type || "main",
+        checkoutUrl: m.checkout_url || "",
+        createdAt: m.created_at,
+        isRemote: true
+      });
+    }
+  }
+
+  const remoteLessons = new Map(
+    (lessonsResult.data || []).map((lesson) => [lesson.id, lesson])
+  );
+
+  const localCourseLessons = SEED_ITEMS.map((seed) => {
+    const remote = remoteLessons.get(seed.id);
+    return {
+      ...seed,
+      title: (remote && remote.title) || seed.title,
+      description: (remote && remote.description) || seed.description,
+      createdAt: (remote && remote.created_at) || seed.createdAt,
+      isRemote: !!remote
+    };
+  });
+
+  const seededIds = new Set(SEED_ITEMS.map((seed) => seed.id));
+  const items = [
+    ...localCourseLessons,
+    ...(lessonsResult.data || [])
+      .filter(
+        (lesson) => !seededIds.has(lesson.id) && lesson.id !== "lesson-day-7"
+      )
+      .map((lesson) => ({
+        id: lesson.id,
+        title: lesson.title,
+        description: lesson.description || "",
+        type: lesson.type || "video",
+        url: lesson.url || "",
+        category: lesson.category || "teaching",
+        tags: Array.isArray(lesson.tags) ? lesson.tags : [],
+        thumbnail: lesson.thumbnail || "",
+        duration: lesson.duration || 0,
+        areaId: lesson.module_id,
+        createdAt: lesson.created_at,
+        isRemote: true
+      }))
+  ];
+
+  const enrollments = (accessResult.data || []).map((row) => row.module_id);
+  const members = getMembers();
+  const member = members.find((item) => item.id === userId);
+  if (member) {
+    saveMembers(
+      members.map((item) =>
+        item.id === userId
+          ? { ...item, enrollments, language: DEFAULT_LANG }
+          : item
+      )
+    );
+  }
+
+  write(KEYS.areas, areas.length ? areas : SEED_AREAS);
+  write(KEYS.content, items);
+  emit("areas");
+  emit("content");
+  return true;
+}
+
+/* =========================================================================
+   SESSION & LANGUAGE
+   ========================================================================= */
 
 export function getSession() {
   return read(KEYS.session, null);

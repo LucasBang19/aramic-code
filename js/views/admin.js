@@ -389,6 +389,22 @@ function areaFormHtml(data, l) {
       </div>
 
       <div class="form-group">
+        <label class="form-label" for="af-area-product-type">Product Offer Type</label>
+        <select class="form-select" id="af-area-product-type" name="productType">
+          <option value="main" ${data.productType === "main" ? "selected" : ""}>Main Front-End Course</option>
+          <option value="orderbump" ${data.productType === "orderbump" ? "selected" : ""}>Order Bump (External Product)</option>
+          <option value="upsell" ${data.productType === "upsell" ? "selected" : ""}>High-Value Upsell</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="af-area-checkout">Checkout URL (For Locked State)</label>
+        <input class="form-input" id="af-area-checkout" name="checkoutUrl" type="url"
+          placeholder="https://checkout.thearamaiccode.com/..." value="${escapeHtml(data.checkoutUrl || "")}" />
+        <p class="form-hint">Direct link to product checkout when an unauthorized member clicks the locked card.</p>
+      </div>
+
+      <div class="form-group">
         <label class="form-label" for="af-area-description">${escapeHtml(t("admin.fieldAreaDescription", l))}</label>
         <textarea class="form-textarea" id="af-area-description" name="description" rows="3"
           placeholder="${escapeHtml(t("admin.areaPlaceholderDesc", l))}">${escapeHtml(data.description)}</textarea>
@@ -417,9 +433,11 @@ function openAreaForm(area) {
     ? {
         title: area.title || "",
         description: area.description || "",
-        cover: area.cover || ""
+        cover: area.cover || "",
+        productType: area.productType || "main",
+        checkoutUrl: area.checkoutUrl || ""
       }
-    : { title: "", description: "", cover: "" };
+    : { title: "", description: "", cover: "", productType: "main", checkoutUrl: "" };
 
   const { modal, close } = openModal({
     title: isEdit ? t("admin.editAreaTitle", l) : t("admin.newAreaTitle", l),
@@ -433,7 +451,9 @@ function openAreaForm(area) {
         const values = {
           title: form.elements.title.value.trim(),
           description: form.elements.description.value.trim(),
-          cover: form.elements.cover.value.trim()
+          cover: form.elements.cover.value.trim(),
+          productType: form.elements.productType.value,
+          checkoutUrl: form.elements.checkoutUrl.value.trim()
         };
         let valid = true;
         form.querySelectorAll(".form-hint").forEach((h) => (h.hidden = true));

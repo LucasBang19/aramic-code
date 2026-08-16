@@ -25,13 +25,16 @@ export async function register(email, password) {
     options: { data: { first_name: emailValue.split("@")[0] || "Member" } }
   });
   if (error) {
+    const msg = error.message || "";
     return {
       ok: false,
-      error: error.message && /already|registered|exists/i.test(error.message)
+      error: /already|registered|exists/i.test(msg)
         ? "exists"
-        : error.message && /provider|signups are disabled|signup is disabled/i.test(error.message)
-          ? "providerDisabled"
-          : "generic"
+        : /not registered|buyer|purchase|authorized|access/i.test(msg)
+        ? "notAuthorized"
+        : /provider|signups are disabled|signup is disabled/i.test(msg)
+        ? "providerDisabled"
+        : "generic"
     };
   }
   if (!data.user || !data.session) return { ok: false, error: "confirmEmail" };
