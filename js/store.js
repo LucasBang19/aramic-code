@@ -324,17 +324,68 @@ export function isLessonCompleted(lessonId) {
 export function setLessonCompleted(lessonId, completed = true) {
   const list = getCompletedLessons();
   const exists = list.includes(lessonId);
+  const item = getItem(lessonId);
+  const moduleId = (item && item.areaId) || MAIN_MODULE_ID;
+  const session = getSession();
+  const userId = session && session.member ? session.member.id : null;
+
   if (completed && !exists) {
     const updated = [...list, lessonId];
     write(KEYS.completed, updated);
     incrementDailyStreak();
     emit("progress", { lessonId, completed: true });
+
+    // Track activity in Supabase
+    if (userId) {
+      supabase
+        .from("user_progress")
+        .upsert(
+          {
+            user_id: userId,
+            lesson_id: lessonId,
+            module_id: moduleId,
+            completed: true,
+            last_listened_at: new Date().toISOString()
+          },
+          { onConflict: "user_id,lesson_id" }
+        )
+        .then(() => {})
+        .catch((err) => console.warn("[store] progress sync err:", err));
+
+      trackUserActivity("lesson_mastered", lessonId, moduleId, {
+        lessonTitle: item ? item.title : lessonId
+      });
+    }
+
     return true;
   }
+
   if (!completed && exists) {
     const updated = list.filter((id) => id !== lessonId);
     write(KEYS.completed, updated);
     emit("progress", { lessonId, completed: false });
+
+    if (userId) {
+      supabase
+        .from("user_progress")
+        .upsert(
+          {
+            user_id: userId,
+            lesson_id: lessonId,
+            module_id: moduleId,
+            completed: false,
+            last_listened_at: new Date().toISOString()
+          },
+          { onConflict: "user_id,lesson_id" }
+        )
+        .then(() => {})
+        .catch((err) => console.warn("[store] progress sync err:", err));
+
+      trackUserActivity("lesson_unmastered", lessonId, moduleId, {
+        lessonTitle: item ? item.title : lessonId
+      });
+    }
+
     return false;
   }
   return exists;
@@ -343,6 +394,69 @@ export function setLessonCompleted(lessonId, completed = true) {
 export function toggleLessonCompleted(lessonId) {
   const state = isLessonCompleted(lessonId);
   return setLessonCompleted(lessonId, !state);
+}
+
+export async function trackUserActivity(eventType, lessonId = null, moduleId = null, metadata = {}) {
+  try {
+    const session = getSession();
+    if (!session || !session.member || !session.member.id) return;
+    const userId = session.member.id;
+
+    // Asynchronously insert log into Supabase
+    supabase
+      .from("user_activity_logs")
+      .insert({
+        user_id: userId,
+        event_type: eventType,
+        lesson_id: lessonId,
+        module_id: moduleId,
+        metadata: {
+          ...metadata,
+          path: window.location.hash || window.location.pathname,
+          userAgent: navigator.userAgent
+        }
+      })
+      .then(({ error }) => {
+        if (error) console.warn("[tracking] user_activity_log err:", error.message);
+      })
+      .catch((err) => console.warn("[tracking] network err:", err));
+
+    // Update profile last_active_at
+    supabase
+      .from("profiles")
+      .update({ last_active_at: new Date().toISOString() })
+      .eq("id", userId)
+      .then(() => {})
+      .catch(() => {});
+  } catch (err) {
+    console.warn("[tracking] error:", err);
+  }
+}
+
+export async function syncUserProgressRemote(userId) {
+  if (!userId) return;
+  try {
+    const { data, error } = await supabase
+      .from("user_progress")
+      .select("lesson_id, completed")
+      .eq("user_id", userId)
+      .eq("completed", true);
+
+    if (error) {
+      console.warn("[supabase] error loading user progress:", error.message);
+      return;
+    }
+
+    if (Array.isArray(data)) {
+      const remoteCompleted = data.map((r) => r.lesson_id);
+      const localCompleted = getCompletedLessons();
+      const merged = Array.from(new Set([...localCompleted, ...remoteCompleted]));
+      write(KEYS.completed, merged);
+      emit("progress", { synced: true, count: merged.length });
+    }
+  } catch (err) {
+    console.warn("[supabase] syncUserProgressRemote err:", err);
+  }
 }
 
 export function getStreakData() {
@@ -557,6 +671,9 @@ export async function syncRemote(userId) {
   write(KEYS.content, items);
   emit("areas");
   emit("content");
+
+  // Sync user progress (completed frequencies) from Supabase
+  await syncUserProgressRemote(userId);
   return true;
 }
 

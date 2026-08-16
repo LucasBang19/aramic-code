@@ -213,6 +213,17 @@ export function renderDetail(container, params) {
     else navigate("home");
   });
 
+  // Track lesson view
+  store.trackUserActivity("lesson_view", item.id, item.areaId, { title: item.title });
+
+  // PDF download tracking
+  const downloadBtn = container.querySelector(".btn-pdf-download");
+  if (downloadBtn) {
+    downloadBtn.addEventListener("click", () => {
+      store.trackUserActivity("pdf_download", item.id, item.areaId, { title: item.title });
+    });
+  }
+
   // Completion toggle button
   const completeBtn = container.querySelector("#btn-toggle-complete");
   const completeText = container.querySelector("#complete-text");
@@ -229,10 +240,26 @@ export function renderDetail(container, params) {
     });
   }
 
-  // Auto-mark completed when audio reaches the end!
+  // Audio player tracking (play & completion)
   const audioEl = container.querySelector("#lesson-audio-player");
   if (audioEl) {
+    let hasTrackedPlay = false;
+    audioEl.addEventListener("play", () => {
+      if (!hasTrackedPlay) {
+        hasTrackedPlay = true;
+        store.trackUserActivity("audio_play", item.id, item.areaId, {
+          title: item.title,
+          duration: item.duration
+        });
+      }
+    });
+
     audioEl.addEventListener("ended", () => {
+      store.trackUserActivity("audio_completed", item.id, item.areaId, {
+        title: item.title,
+        duration: item.duration
+      });
+
       if (!store.isLessonCompleted(item.id)) {
         store.setLessonCompleted(item.id, true);
         if (completeBtn && completeText) {

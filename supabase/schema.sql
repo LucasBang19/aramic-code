@@ -53,6 +53,9 @@ create table if not exists public.profiles (
 );
 
 alter table public.profiles add column if not exists streak_count integer not null default 1;
+alter table public.profiles add column if not exists last_active_at timestamptz not null default now();
+alter table public.profiles add column if not exists total_time_listened integer not null default 0;
+alter table public.profiles add column if not exists completed_count integer not null default 0;
 
 /* =========================================================================
    4. AUTHORIZED BUYERS (PAGGINS / CHECKOUT PURCHASES WHITELIST)
@@ -75,6 +78,34 @@ create table if not exists public.module_access (
   module_id text not null references public.modules(id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (user_id, module_id)
+);
+
+/* =========================================================================
+   6. USER PROGRESS (COMPLETED FREQUENCIES / LESSONS)
+   ========================================================================= */
+create table if not exists public.user_progress (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  lesson_id text not null references public.lessons(id) on delete cascade,
+  module_id text not null references public.modules(id) on delete cascade,
+  completed boolean not null default true,
+  listen_count integer not null default 1,
+  last_listened_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  unique (user_id, lesson_id)
+);
+
+/* =========================================================================
+   7. USER ACTIVITY LOGS (REAL-TIME USAGE & ENGAGEMENT AUDITING)
+   ========================================================================= */
+create table if not exists public.user_activity_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  event_type text not null, -- 'audio_started', 'audio_completed', 'manual_mastered', 'pdf_download', 'lesson_view', 'login'
+  lesson_id text references public.lessons(id) on delete cascade,
+  module_id text references public.modules(id) on delete cascade,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
 );
 
 /* =========================================================================
@@ -238,6 +269,25 @@ create policy "Users can receive module access" on public.module_access
 drop policy if exists "Admins can manage module access" on public.module_access;
 create policy "Admins can manage module access" on public.module_access
   for delete to authenticated using (public.is_admin());
+
+-- User Progress (Tracking completed frequencies)
+alter table public.user_progress enable row level security;
+
+drop policy if exists "Users can manage their own progress" on public.user_progress;
+create policy "Users can manage their own progress" on public.user_progress
+  for all to authenticated using (user_id = auth.uid() or public.is_admin())
+  with check (user_id = auth.uid() or public.is_admin());
+
+-- User Activity Logs (Auditing engagement)
+alter table public.user_activity_logs enable row level security;
+
+drop policy if exists "Users can record activity logs" on public.user_activity_logs;
+create policy "Users can record activity logs" on public.user_activity_logs
+  for insert to authenticated with check (user_id = auth.uid() or public.is_admin());
+
+drop policy if exists "Users and Admins can read activity logs" on public.user_activity_logs;
+create policy "Users and Admins can read activity logs" on public.user_activity_logs
+  for select to authenticated using (user_id = auth.uid() or public.is_admin());
 
 /* =========================================================================
    SEED DATA (5 CANONICAL PRODUCTS)

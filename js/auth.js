@@ -49,6 +49,7 @@ async function finishRemoteLogin(user) {
   cacheMember(member);
   store.setSession(createSession(member));
   await store.syncRemote(member.id);
+  void store.trackUserActivity("portal_login", null, null, { email: member.email });
   return { ok: true, member, session: store.getSession() };
 }
 
