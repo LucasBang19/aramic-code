@@ -36,16 +36,39 @@ function detectModulesFromPayload(body) {
 
   const textToScan = JSON.stringify(body || {}).toLowerCase();
 
-  if (textToScan.includes("miracle") || textToScan.includes("generator")) {
+  // The Miracle Generator
+  if (
+    textToScan.includes("f9fd8789-9006-4e38-b655-da31ce8bf128") ||
+    textToScan.includes("miracle") ||
+    textToScan.includes("generator")
+  ) {
     modules.add("a-miracle-generator");
   }
-  if (textToScan.includes("jewish") || textToScan.includes("ritual")) {
+
+  // The Jewish Secret Ritual
+  if (
+    textToScan.includes("3054f780-aeb9-4ee7-963f-417f0255653b") ||
+    textToScan.includes("jewish") ||
+    textToScan.includes("ritual")
+  ) {
     modules.add("a-jewish-secret-ritual");
   }
-  if (textToScan.includes("polyglot") || textToScan.includes("sleep")) {
+
+  // The Polyglot Sleep
+  if (
+    textToScan.includes("7e9aea7e-12af-467b-9c57-f239ad5b54f0") ||
+    textToScan.includes("polyglot") ||
+    textToScan.includes("sleep")
+  ) {
     modules.add("a-polyglot-sleep");
   }
-  if (textToScan.includes("covenant") || textToScan.includes("conevant")) {
+
+  // The Covenant Hour
+  if (
+    textToScan.includes("62267a39-b804-4ac0-810a-c1af386549b9") ||
+    textToScan.includes("covenant") ||
+    textToScan.includes("conevant")
+  ) {
     modules.add("a-covenant-hour");
   }
 

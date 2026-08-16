@@ -23,7 +23,7 @@ export const SEED_AREAS = [
       "Ancient acoustic resonance designed to trigger sudden positive shifts, divine synchronicities, and rapid material manifestations.",
     cover: "assets/aramaic.jpg",
     productType: "orderbump",
-    checkoutUrl: "https://thearamaiccode.com/checkout/miracle-generator",
+    checkoutUrl: "https://www.paggins.com/checkout/f9fd8789-9006-4e38-b655-da31ce8bf128",
     createdAt: "2026-08-12T09:30:00.000Z",
     isSeed: true
   },
@@ -34,7 +34,7 @@ export const SEED_AREAS = [
       "Secret esoteric blessings, energetic shielding, and prosperity consecrations preserved through sacred rabbinical oral traditions.",
     cover: "assets/aramaic.jpg",
     productType: "orderbump",
-    checkoutUrl: "https://thearamaiccode.com/checkout/jewish-secret-ritual",
+    checkoutUrl: "https://www.paggins.com/checkout/3054f780-aeb9-4ee7-963f-417f0255653b",
     createdAt: "2026-08-12T09:20:00.000Z",
     isSeed: true
   },
@@ -45,7 +45,7 @@ export const SEED_AREAS = [
       "Subconscious nocturnal reprogramming in deep theta-delta wave frequencies to rewire cognitive patterns and unlock effortless fluency & wealth mindset during sleep.",
     cover: "assets/aramaic.jpg",
     productType: "orderbump",
-    checkoutUrl: "https://thearamaiccode.com/checkout/polyglot-sleep",
+    checkoutUrl: "https://www.paggins.com/checkout/7e9aea7e-12af-467b-9c57-f239ad5b54f0",
     createdAt: "2026-08-12T09:10:00.000Z",
     isSeed: true
   },
@@ -56,7 +56,7 @@ export const SEED_AREAS = [
       "The ultimate deep immersion frequency: The Life Changing Hour. A high-potency sound transmission reserved for those ready for complete spiritual and financial ascension.",
     cover: "assets/aramaic.jpg",
     productType: "upsell",
-    checkoutUrl: "https://thearamaiccode.com/checkout/covenant-hour",
+    checkoutUrl: "https://www.paggins.com/checkout/62267a39-b804-4ac0-810a-c1af386549b9",
     createdAt: "2026-08-12T09:00:00.000Z",
     isSeed: true
   }
